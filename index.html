@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1D9E75" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="EcoTrack" />
+  <link rel="manifest" href="manifest.json" />
+  <title>EcoTrack</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F5F7F5; color: #1A1A1A; }
+    #app { max-width: 430px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #F5F7F5; }
+
+    /* NAV */
+    .tab-bar { display: flex; background: #fff; border-top: 0.5px solid #E5E7EB; padding-bottom: env(safe-area-inset-bottom); flex-shrink: 0; }
+    .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px 6px; gap: 3px; border: none; background: none; cursor: pointer; color: #9CA3AF; font-size: 10px; font-weight: 500; }
+    .tab.active { color: #1D9E75; }
+    .tab svg { width: 22px; height: 22px; }
+
+    /* SCREENS */
+    .screen { flex: 1; overflow-y: auto; overflow-x: hidden; display: none; }
+    .screen.active { display: block; }
+
+    /* HEADER GRADIENT */
+    .grad-header { background: linear-gradient(160deg, #0F6E56, #1D9E75); padding: 52px 20px 24px; color: #fff; }
+    .grad-header h1 { font-size: 20px; font-weight: 600; }
+    .grad-header p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+
+    /* CARDS */
+    .card { background: #fff; border-radius: 14px; border: 0.5px solid #E5E7EB; padding: 16px; }
+    .section { margin: 16px 16px 0; }
+    .section-title { font-size: 15px; font-weight: 600; color: #1A1A1A; margin-bottom: 10px; }
+
+    /* STATS ROW */
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 16px 0; }
+    .stat-card { background: #fff; border-radius: 14px; border: 0.5px solid #E5E7EB; padding: 12px 8px; text-align: center; }
+    .stat-icon { font-size: 20px; }
+    .stat-num { font-size: 20px; font-weight: 700; margin-top: 4px; }
+    .stat-label { font-size: 10px; color: #6B7280; margin-top: 2px; }
+
+    /* TREE CARD */
+    .tree-card { background: rgba(255,255,255,0.18); border-radius: 16px; padding: 18px; text-align: center; margin-top: 16px; }
+    .tree-emoji { font-size: 56px; line-height: 1; }
+    .tree-label { font-weight: 600; font-size: 15px; margin-top: 8px; }
+    .tree-sub { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+
+    /* PROGRESS BAR */
+    .progress-bg { height: 8px; background: #E1F5EE; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #1D9E75; border-radius: 4px; transition: width 0.5s ease; }
+
+    /* QUICK GRID */
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    .quick-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; border: none; background: none; cursor: pointer; }
+    .quick-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .quick-label { font-size: 11px; color: #6B7280; font-weight: 500; }
+
+    /* PLASTIC COUNTER */
+    .plastico-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 12px; border: 0.5px solid #E5E7EB; padding: 14px; margin-bottom: 8px; }
+    .plastico-icon { font-size: 22px; width: 32px; text-align: center; }
+    .plastico-label { flex: 1; font-size: 15px; }
+    .counter { display: flex; align-items: center; gap: 10px; }
+    .counter-btn { width: 32px; height: 32px; border-radius: 8px; border: 0.5px solid #E5E7EB; background: #F5F7F5; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; line-height: 1; }
+    .counter-btn.plus { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+    .counter-num { font-size: 16px; font-weight: 600; min-width: 20px; text-align: center; }
+
+    /* ECOSCAN BTN */
+    .ecoscan-btn { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 14px; border: 1.5px dashed #1D9E75; padding: 16px; width: 100%; cursor: pointer; text-align: left; }
+    .ecoscan-icon { font-size: 24px; }
+    .ecoscan-title { font-size: 15px; font-weight: 600; color: #1D9E75; }
+    .ecoscan-sub { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+    /* SAVE BTN */
+    .save-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: #1D9E75; color: #fff; border: none; border-radius: 14px; padding: 16px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .save-btn.ok { background: #0F6E56; }
+
+    /* IMPACTO CARD */
+    .impacto-card { background: #E1F5EE; border: 0.5px solid #1D9E75; border-radius: 14px; padding: 16px; }
+    .impacto-row { display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr; gap: 12px; align-items: center; }
+    .impacto-divider { height: 36px; background: #E5E7EB; }
+    .impacto-item { text-align: center; }
+    .impacto-num { font-size: 20px; font-weight: 700; color: #1D9E75; }
+    .impacto-label { font-size: 10px; color: #6B7280; margin-top: 2px; }
+
+    /* RANKING */
+    .podio-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 16px 0; }
+    .podio-card { background: #fff; border-radius: 14px; border: 0.5px solid #E5E7EB; padding: 12px 8px; text-align: center; }
+    .podio-card.first { border: 1.5px solid #1D9E75; }
+    .medalla { font-size: 22px; }
+    .avatar { width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; margin: 6px auto; }
+    .avatar.green { background: #1D9E75; color: #fff; }
+    .avatar.light { background: #E1F5EE; color: #1D9E75; }
+    .podio-nombre { font-size: 11px; font-weight: 600; }
+    .podio-pts { font-size: 13px; font-weight: 700; color: #1D9E75; margin-top: 2px; }
+    .familia-row { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 12px; border: 0.5px solid #E5E7EB; padding: 12px; margin-bottom: 8px; }
+    .familia-row.mia { border-color: #1D9E75; background: #E1F5EE; }
+    .posicion { font-size: 13px; font-weight: 700; color: #9CA3AF; width: 24px; }
+    .avatar-sm { width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .familia-nombre { font-size: 14px; font-weight: 600; }
+    .familia-plasticos { font-size: 12px; color: #6B7280; margin-top: 1px; }
+    .pts-tag { display: flex; align-items: center; gap: 3px; background: #FAEEDA; border-radius: 8px; padding: 4px 8px; font-size: 12px; font-weight: 700; color: #854F0B; flex-shrink: 0; }
+
+    /* RETOS */
+    .reto-card { background: #fff; border-radius: 14px; border: 0.5px solid #E5E7EB; padding: 16px; margin-bottom: 12px; }
+    .reto-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .reto-titulo { font-size: 15px; font-weight: 600; flex: 1; }
+    .reto-desc { font-size: 13px; color: #6B7280; line-height: 1.5; margin-bottom: 12px; }
+    .reto-footer { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; }
+    .reto-pct { font-weight: 600; color: #1D9E75; }
+    .logros-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .logro-card { background: #fff; border-radius: 14px; border: 0.5px solid #E5E7EB; padding: 14px; text-align: center; }
+    .logro-card.locked { background: #F5F7F5; }
+    .logro-icon { font-size: 32px; margin-bottom: 8px; }
+    .logro-nombre { font-size: 13px; font-weight: 600; }
+    .logro-nombre.locked { color: #9CA3AF; }
+    .logro-desc { font-size: 11px; color: #6B7280; margin-top: 4px; }
+    .logro-icon.locked { opacity: 0.3; }
+
+    /* PERFIL */
+    .profile-header { text-align: center; padding: 24px 24px 16px; }
+    .avatar-big { width: 80px; height: 80px; border-radius: 40px; background: #1D9E75; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; margin: 0 auto 12px; }
+    .profile-nombre { font-size: 20px; font-weight: 700; }
+    .profile-sub { font-size: 13px; color: #6B7280; margin-top: 4px; }
+    .badge-row { display: flex; justify-content: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .badge { display: flex; align-items: center; gap: 4px; background: #E1F5EE; border-radius: 20px; padding: 5px 10px; font-size: 12px; color: #0F6E56; font-weight: 500; }
+    .stats-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px 16px; }
+    .stat-card-2 { background: #fff; border-radius: 14px; border: 0.5px solid #E5E7EB; padding: 14px; text-align: center; }
+    .opcion-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 12px; border: 0.5px solid #E5E7EB; padding: 14px; margin-bottom: 8px; cursor: pointer; }
+    .opcion-icon { width: 38px; height: 38px; border-radius: 10px; background: #E1F5EE; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .opcion-label { font-size: 14px; font-weight: 600; }
+    .opcion-sub { font-size: 12px; color: #6B7280; margin-top: 1px; }
+
+    /* TOGGLE */
+    .toggle-row { display: flex; background: #fff; border-radius: 12px; border: 0.5px solid #E5E7EB; padding: 4px; margin: 16px 16px 0; }
+    .toggle-btn { flex: 1; padding: 8px; border-radius: 10px; border: none; background: none; font-size: 14px; font-weight: 500; color: #6B7280; cursor: pointer; }
+    .toggle-btn.active { background: #1D9E75; color: #fff; }
+
+    /* TIP */
+    .tip-card { background: #FAEEDA; border-radius: 14px; padding: 14px; display: flex; gap: 10px; align-items: flex-start; }
+    .tip-title { font-size: 13px; font-weight: 600; color: #633806; margin-bottom: 4px; }
+    .tip-text { font-size: 13px; color: #854F0B; line-height: 1.5; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0F6E56; color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 100; }
+    .toast.show { opacity: 1; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; text-align: center; }
+    .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .modal p { font-size: 14px; color: #6B7280; line-height: 1.5; margin-bottom: 20px; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 12px; border: 0.5px solid #E5E7EB; font-size: 14px; font-weight: 600; cursor: pointer; background: #F5F7F5; color: #1A1A1A; }
+    .modal-btn.primary { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+
+    .pb-safe { padding-bottom: 16px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SCREEN: HOME -->
+  <div class="screen active" id="screen-home">
+    <div style="overflow-y:auto;height:100%">
+      <div class="grad-header">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+          <div>
+            <h1>Hola, Mi Familia 👋</h1>
+            <p>San Isidro Etapa 2</p>
+          </div>
+          <span style="font-size:22px">🔔</span>
+        </div>
+        <div class="tree-card">
+          <div class="tree-emoji" id="tree-emoji">🌿</div>
+          <div class="tree-label">Tu árbol virtual</div>
+          <div class="tree-sub" id="tree-sub">Nivel 2 — sigue evitando plásticos para hacerlo crecer</div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">♻️</div>
+          <div class="stat-num" style="color:#1D9E75" id="stat-evitados">23</div>
+          <div class="stat-label">Plásticos evitados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-num" style="color:#EF9F27" id="stat-puntos">174</div>
+          <div class="stat-label">Puntos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">☁️</div>
+          <div class="stat-num" style="color:#6B7280" id="stat-co2">1.89</div>
+          <div class="stat-label">kg CO₂ ahorrado</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="card">
+          <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
+            <span style="font-size:28px;font-weight:700;color:#1D9E75" id="comunidad-total">1,284</span>
+            <span style="font-size:14px;color:#6B7280">/ 2,000 plásticos</span>
+          </div>
+          <div class="progress-bg"><div class="progress-fill" id="comunidad-bar" style="width:64%"></div></div>
+          <div style="font-size:12px;color:#6B7280;margin-top:8px">47 familias activas este mes</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Acceso rápido</div>
+        <div class="quick-grid">
+          <button class="quick-btn" onclick="goTo('registro')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#1D9E75,#0F6E56)">📷</div>
+            <span class="quick-label">EcoScan</span>
+          </button>
+          <button class="quick-btn" onclick="goTo('registro')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#FAC775,#EF9F27)">📝</div>
+            <span class="quick-label">Registrar</span>
+          </button>
+          <button class="quick-btn" onclick="goTo('ranking')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#85B7EB,#378ADD)">🏆</div>
+            <span class="quick-label">Ranking</span>
+          </button>
+          <button class="quick-btn" onclick="goTo('retos')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#F0997B,#D85A30)">🎯</div>
+            <span class="quick-label">Retos</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="section" style="margin-bottom:16px">
+        <div class="tip-card">
+          <span style="font-size:20px">💡</span>
+          <div>
+            <div class="tip-title">Consejo del día</div>
+            <div class="tip-text">Lleva una bolsa de tela al mercado y evita hasta 5 bolsas plásticas por compra.</div>
+          </div>
+        </div>
+      </div>
+      <div class="pb-safe"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: REGISTRO -->
+  <div class="screen" id="screen-registro">
+    <div style="overflow-y:auto;height:100%">
+      <div style="padding:52px 20px 16px">
+        <h1 style="font-size:22px;font-weight:700">Registro diario</h1>
+        <p style="font-size:14px;color:#6B7280;margin-top:4px">¿Cuántos plásticos usaste hoy?</p>
+      </div>
+
+      <div class="section">
+        <button class="ecoscan-btn" onclick="simularEcoScan()">
+          <span class="ecoscan-icon">📷</span>
+          <div>
+            <div class="ecoscan-title" id="ecoscan-title">Usar EcoScan (IA)</div>
+            <div class="ecoscan-sub">Toma una foto y la IA cuenta automáticamente</div>
+          </div>
+          <span style="color:#9CA3AF">›</span>
+        </button>
+      </div>
+
+      <div class="section">
+        <div class="section-title">O registra manualmente</div>
+        <div id="plasticos-list"></div>
+      </div>
+
+      <div class="section" id="impacto-section" style="display:none">
+        <div class="impacto-card">
+          <div style="font-size:13px;font-weight:600;color:#0F6E56;text-align:center;margin-bottom:12px">Impacto de hoy</div>
+          <div class="impacto-row">
+            <div class="impacto-item">
+              <div class="impacto-num" id="imp-total">0</div>
+              <div class="impacto-label">plásticos</div>
+            </div>
+            <div class="impacto-divider"></div>
+            <div class="impacto-item">
+              <div class="impacto-num" style="color:#E24B4A" id="imp-co2">0</div>
+              <div class="impacto-label">kg CO₂</div>
+            </div>
+            <div class="impacto-divider"></div>
+            <div class="impacto-item">
+              <div class="impacto-num" style="color:#378ADD" id="imp-marino">0</div>
+              <div class="impacto-label">riesgo marino</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="margin-bottom:24px">
+        <button class="save-btn" id="save-btn" onclick="guardarRegistro()">
+          💾 Guardar registro
+        </button>
+      </div>
+      <div class="pb-safe"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: RANKING -->
+  <div class="screen" id="screen-ranking">
+    <div style="overflow-y:auto;height:100%">
+      <div style="padding:52px 20px 8px">
+        <h1 style="font-size:22px;font-weight:700">Ranking</h1>
+        <p style="font-size:14px;color:#6B7280;margin-top:4px">San Isidro Etapa 2</p>
+      </div>
+      <div class="toggle-row">
+        <button class="toggle-btn" onclick="setPeriodo('semanal',this)">Semanal</button>
+        <button class="toggle-btn active" onclick="setPeriodo('mensual',this)">Mensual</button>
+      </div>
+      <div class="podio-row" id="podio"></div>
+      <div class="section" style="margin-bottom:0">
+        <div class="section-title">Todas las familias</div>
+        <div id="ranking-list"></div>
+      </div>
+      <div class="section" style="margin-bottom:16px">
+        <div class="tip-card">
+          <span style="font-size:22px">🎁</span>
+          <div>
+            <div class="tip-title">Premio del mes</div>
+            <div class="tip-text">La familia #1 gana un descuento especial en negocios aliados de San Isidro Etapa 2.</div>
+          </div>
+        </div>
+      </div>
+      <div class="pb-safe"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: RETOS -->
+  <div class="screen" id="screen-retos">
+    <div style="overflow-y:auto;height:100%">
+      <div style="padding:52px 20px 8px">
+        <h1 style="font-size:22px;font-weight:700">Retos</h1>
+        <p style="font-size:14px;color:#6B7280;margin-top:4px">Únete y gana puntos extra</p>
+      </div>
+      <div class="section">
+        <div class="section-title">Retos activos</div>
+        <div id="retos-list"></div>
+      </div>
+      <div class="section" style="margin-bottom:16px">
+        <div class="section-title">Medallas</div>
+        <div class="logros-grid" id="logros-list"></div>
+      </div>
+      <div class="pb-safe"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: PERFIL -->
+  <div class="screen" id="screen-perfil">
+    <div style="overflow-y:auto;height:100%">
+      <div style="padding-top:52px">
+        <div class="profile-header">
+          <div class="avatar-big">MF</div>
+          <div class="profile-nombre">Mi Familia</div>
+          <div class="profile-sub">San Isidro Etapa 2 · Miembro desde 2025</div>
+          <div class="badge-row">
+            <span class="badge">🌱 Primer registro</span>
+            <span class="badge">♻️ Reciclador</span>
+          </div>
+        </div>
+        <div class="stats-grid-2">
+          <div class="stat-card-2">
+            <div style="font-size:20px;margin-bottom:4px">♻️</div>
+            <div style="font-size:22px;font-weight:700;color:#1D9E75" id="p-evitados">23</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px">Plásticos evitados</div>
+          </div>
+          <div class="stat-card-2">
+            <div style="font-size:20px;margin-bottom:4px">⭐</div>
+            <div style="font-size:22px;font-weight:700;color:#EF9F27" id="p-puntos">174</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px">Puntos totales</div>
+          </div>
+          <div class="stat-card-2">
+            <div style="font-size:20px;margin-bottom:4px">📅</div>
+            <div style="font-size:22px;font-weight:700;color:#378ADD">12</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px">Días activos</div>
+          </div>
+          <div class="stat-card-2">
+            <div style="font-size:20px;margin-bottom:4px">🏅</div>
+            <div style="font-size:22px;font-weight:700;color:#D85A30">#6</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px">Posición actual</div>
+          </div>
+        </div>
+        <div class="section" style="margin-bottom:16px">
+          <div class="opcion-row"><div class="opcion-icon">🔔</div><div><div class="opcion-label">Notificaciones</div><div class="opcion-sub">Recordatorios diarios</div></div><span style="color:#9CA3AF;margin-left:auto">›</span></div>
+          <div class="opcion-row"><div class="opcion-icon">👨‍👩‍👧</div><div><div class="opcion-label">Mi familia</div><div class="opcion-sub">Gestionar miembros</div></div><span style="color:#9CA3AF;margin-left:auto">›</span></div>
+          <div class="opcion-row"><div class="opcion-icon">🗺️</div><div><div class="opcion-label">Puntos de reciclaje</div><div class="opcion-sub">Mapa de la comunidad</div></div><span style="color:#9CA3AF;margin-left:auto">›</span></div>
+          <div class="opcion-row"><div class="opcion-icon">🏪</div><div><div class="opcion-label">Negocios aliados</div><div class="opcion-sub">Ver descuentos disponibles</div></div><span style="color:#9CA3AF;margin-left:auto">›</span></div>
+          <div style="text-align:center;font-size:12px;color:#9CA3AF;margin-top:16px">EcoTrack · Innova Schools · 2025</div>
+        </div>
+      </div>
+      <div class="pb-safe"></div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <button class="tab active" onclick="goTo('home')" id="tab-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Inicio
+    </button>
+    <button class="tab" onclick="goTo('registro')" id="tab-registro">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Registrar
+    </button>
+    <button class="tab" onclick="goTo('ranking')" id="tab-ranking">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Ranking
+    </button>
+    <button class="tab" onclick="goTo('retos')" id="tab-retos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21l4-4 4 4M3 7l9 4 9-4-9-4-9 4z"/><path d="M3 7v4l9 4 9-4V7"/></svg>
+      Retos
+    </button>
+    <button class="tab" onclick="goTo('perfil')" id="tab-perfil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Perfil
+    </button>
+  </nav>
+</div>
+
+<!-- MODAL ECOSCAN -->
+<div class="modal-overlay" id="modal-ecoscan">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:12px">📷</div>
+    <h3>EcoScan detectó</h3>
+    <p>Se detectaron <strong>2 botellas</strong>, <strong>1 bolsa</strong> y <strong>1 sorbete</strong>. ¿Es correcto?</p>
+    <div class="modal-btns">
+      <button class="modal-btn" onclick="cerrarModal()">Corregir</button>
+      <button class="modal-btn primary" onclick="confirmarEcoScan()">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const PLASTICOS = [
+  { id:'botellas', label:'Botellas', icon:'🍶', co2:0.082, marino:0.09 },
+  { id:'bolsas',   label:'Bolsas',   icon:'🛍️', co2:0.033, marino:0.05 },
+  { id:'envases',  label:'Envases',  icon:'📦', co2:0.055, marino:0.07 },
+  { id:'sorbetes', label:'Sorbetes', icon:'🥤', co2:0.004, marino:0.006 },
+  { id:'sachets',  label:'Sachets',  icon:'🧴', co2:0.012, marino:0.015 },
+];
+
+const FAMILIAS = [
+  { nombre:'Familia García', pts:340, ev:45, av:'G' },
+  { nombre:'Familia López',  pts:290, ev:38, av:'L' },
+  { nombre:'Familia Torres', pts:255, ev:32, av:'T' },
+  { nombre:'Familia Ramírez',pts:210, ev:27, av:'R' },
+  { nombre:'Familia Díaz',   pts:180, ev:22, av:'D' },
+  { nombre:'Mi Familia',     pts:174, ev:23, av:'M', mia:true },
+];
+
+const RETOS = [
+  { titulo:'Semana sin bolsas', desc:'7 días sin usar bolsas plásticas en tus compras', prog:4, meta:7, unidad:'días', pts:50 },
+  { titulo:'Reto comunitario', desc:'San Isidro Etapa 2: eliminar 1,000 botellas entre todos', prog:647, meta:1000, unidad:'botellas', pts:200 },
+  { titulo:'Reduce 5 plásticos', desc:'Reduce 5 plásticos esta semana respecto a la anterior', prog:3, meta:5, unidad:'plásticos', pts:30 },
+];
+
+const LOGROS = [
+  { icon:'🌱', nombre:'Primer registro', desc:'Registraste tu primer día', ok:true },
+  { icon:'♻️', nombre:'Reciclador', desc:'10 plásticos evitados', ok:true },
+  { icon:'🌊', nombre:'Guardián del mar', desc:'50 plásticos evitados', ok:false },
+  { icon:'🏆', nombre:'Campeón', desc:'Semana en el top 3', ok:false },
+];
+
+const TREES = ['🌱','🌿','🌳','🌲','🏔️'];
+
+let cantidades = {};
+let totalEvitados = parseInt(localStorage.getItem('evitados') || '23');
+let totalPuntos = parseInt(localStorage.getItem('puntos') || '174');
+
+function goTo(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'ranking') renderRanking();
+}
+
+function renderPlasticos() {
+  const list = document.getElementById('plasticos-list');
+  list.innerHTML = PLASTICOS.map(p => `
+    <div class="plastico-row">
+      <span class="plastico-icon">${p.icon}</span>
+      <span class="plastico-label">${p.label}</span>
+      <div class="counter">
+        <button class="counter-btn" onclick="cambiar('${p.id}',-1)">−</button>
+        <span class="counter-num" id="cnt-${p.id}">0</span>
+        <button class="counter-btn plus" onclick="cambiar('${p.id}',1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function cambiar(id, delta) {
+  cantidades[id] = Math.max(0, (cantidades[id] || 0) + delta);
+  document.getElementById('cnt-' + id).textContent = cantidades[id];
+  actualizarImpacto();
+}
+
+function actualizarImpacto() {
+  const total = Object.values(cantidades).reduce((a,b) => a+b, 0);
+  const co2 = PLASTICOS.reduce((a,p) => a + (cantidades[p.id]||0)*p.co2, 0);
+  const marino = PLASTICOS.reduce((a,p) => a + (cantidades[p.id]||0)*p.marino, 0);
+  const sec = document.getElementById('impacto-section');
+  if (total > 0) {
+    sec.style.display = 'block';
+    document.getElementById('imp-total').textContent = total;
+    document.getElementById('imp-co2').textContent = co2.toFixed(3);
+    document.getElementById('imp-marino').textContent = marino.toFixed(3);
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+function simularEcoScan() {
+  const title = document.getElementById('ecoscan-title');
+  title.textContent = 'Analizando imagen...';
+  setTimeout(() => {
+    title.textContent = 'Usar EcoScan (IA)';
+    document.getElementById('modal-ecoscan').classList.add('show');
+  }, 1800);
+}
+
+function cerrarModal() { document.getElementById('modal-ecoscan').classList.remove('show'); }
+
+function confirmarEcoScan() {
+  cerrarModal();
+  cantidades = { botellas:2, bolsas:1, envases:0, sorbetes:1, sachets:0 };
+  PLASTICOS.forEach(p => {
+    const el = document.getElementById('cnt-' + p.id);
+    if (el) el.textContent = cantidades[p.id] || 0;
+  });
+  actualizarImpacto();
+  showToast('EcoScan completado ✓');
+}
+
+function guardarRegistro() {
+  const total = Object.values(cantidades).reduce((a,b) => a+b, 0);
+  const btn = document.getElementById('save-btn');
+  if (total === 0) {
+    showToast('¡Sin plásticos suma 20 puntos extra!');
+    totalEvitados += 0; totalPuntos += 20;
+  } else {
+    totalEvitados += total; totalPuntos += 15;
+  }
+  localStorage.setItem('evitados', totalEvitados);
+  localStorage.setItem('puntos', totalPuntos);
+  btn.textContent = '✓ ¡Registrado! +15 puntos';
+  btn.classList.add('ok');
+  actualizarHome();
+  setTimeout(() => { btn.textContent = '💾 Guardar registro'; btn.classList.remove('ok'); }, 2500);
+  cantidades = {};
+  PLASTICOS.forEach(p => { const el = document.getElementById('cnt-' + p.id); if(el) el.textContent = 0; });
+  actualizarImpacto();
+}
+
+function actualizarHome() {
+  const stage = Math.min(Math.floor(totalEvitados / 5), 4);
+  document.getElementById('tree-emoji').textContent = TREES[stage];
+  document.getElementById('tree-sub').textContent = `Nivel ${stage+1} — sigue evitando plásticos para hacerlo crecer`;
+  document.getElementById('stat-evitados').textContent = totalEvitados;
+  document.getElementById('stat-puntos').textContent = totalPuntos;
+  document.getElementById('stat-co2').textContent = (totalEvitados * 0.05).toFixed(2);
+  document.getElementById('p-evitados').textContent = totalEvitados;
+  document.getElementById('p-puntos').textContent = totalPuntos;
+}
+
+function renderRanking() {
+  const sorted = [...FAMILIAS].sort((a,b) => b.pts - a.pts);
+  const medallas = ['🥇','🥈','🥉'];
+  document.getElementById('podio').innerHTML = sorted.slice(0,3).map((f,i) => `
+    <div class="podio-card ${i===0?'first':''}">
+      <div class="medalla">${medallas[i]}</div>
+      <div class="avatar ${i===0?'green':'light'}">${f.av}</div>
+      <div class="podio-nombre">${f.nombre.replace('Familia ','')}</div>
+      <div class="podio-pts">${f.pts} pts</div>
+    </div>
+  `).join('');
+
+  document.getElementById('ranking-list').innerHTML = sorted.map((f,i) => `
+    <div class="familia-row ${f.mia?'mia':''}">
+      <span class="posicion">#${i+1}</span>
+      <div class="avatar-sm ${f.mia?'green':'light'}">${f.av}</div>
+      <div style="flex:1">
+        <div class="familia-nombre">${f.nombre}${f.mia?' (Tú)':''}</div>
+        <div class="familia-plasticos">${f.ev} plásticos evitados</div>
+      </div>
+      <div class="pts-tag">⭐ ${f.pts}</div>
+    </div>
+  `).join('');
+}
+
+function renderRetos() {
+  document.getElementById('retos-list').innerHTML = RETOS.map(r => {
+    const pct = Math.min((r.prog/r.meta)*100, 100);
+    return `
+      <div class="reto-card">
+        <div class="reto-header">
+          <span class="reto-titulo">${r.titulo}</span>
+          <span class="pts-tag">⭐ +${r.pts}</span>
+        </div>
+        <div class="reto-desc">${r.desc}</div>
+        <div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="reto-footer">
+          <span style="color:#6B7280;font-size:12px">${r.prog} / ${r.meta} ${r.unidad}</span>
+          <span class="reto-pct">${Math.round(pct)}%</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('logros-list').innerHTML = LOGROS.map(l => `
+    <div class="logro-card ${l.ok?'':'locked'}">
+      <div class="logro-icon ${l.ok?'':'locked'}">${l.icon}</div>
+      <div class="logro-nombre ${l.ok?'':'locked'}">${l.nombre}</div>
+      <div class="logro-desc">${l.desc}</div>
+    </div>
+  `).join('');
+}
+
+function setPeriodo(p, btn) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+renderPlasticos();
+renderRanking();
+renderRetos();
+actualizarHome();
+</script>
+</body>
+</html>
